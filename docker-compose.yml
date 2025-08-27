@@ -1,0 +1,149 @@
+services:
+  # Next.js Frontend Application
+  frontend:
+    build:
+      context: ./next-auth-starter
+      dockerfile: Dockerfile
+    container_name: next-auth-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    env_file:
+      - ./next-auth-starter/.env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/next_auth_db
+      NEXT_PUBLIC_API_BASE_URL: http://api:${API_PORT:-8000}
+    depends_on:
+      - postgres
+      - api
+    networks:
+      - ai-backend-network
+
+  # AI Backend API
+  api:
+    build:
+      context: ./ai-backend
+      dockerfile: Dockerfile.api
+    container_name: ai-backend-api
+    restart: unless-stopped
+    ports:
+      - "${DOCKER_API_PORT:-8010}:${API_PORT:-8000}"
+    env_file:
+      - ./ai-backend/.env
+    environment:
+      MONGODB_URL: ${DOCKER_MONGODB_URL:-mongodb://ai_backend_user:ai_backend_password@mongodb:27017/ai_backend?authSource=ai_backend}
+      DATABASE_NAME: ${DATABASE_NAME:-ai_backend}
+      REDIS_URL: ${DOCKER_REDIS_URL:-redis://redis:6379/0}
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - ai-backend-network
+
+  # PostgreSQL Database for Next.js Frontend
+  postgres:
+    image: postgres:16
+    container_name: next-auth-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-next_auth_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ai-backend-network
+
+  # MongoDB Database for AI Backend
+  mongodb:
+    image: mongo:7.0
+    container_name: ai-backend-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: ai_backend
+    volumes:
+      - mongodb_data:/data/db
+      - ./ai-backend/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - ai-backend-network
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: ai-backend-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - ai-backend-network
+
+  celery-worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    container_name: ai-backend-celery
+    restart: unless-stopped
+    command: python worker.py
+    env_file:
+      - ./worker/.env
+    environment:
+      MONGODB_URL: ${DOCKER_MONGODB_URL:-mongodb://ai_backend_user:ai_backend_password@mongodb:27017/ai_backend?authSource=ai_backend}
+      DATABASE_NAME: ${DATABASE_NAME:-ai_backend}
+      REDIS_URL: ${DOCKER_REDIS_URL:-redis://redis:6379/0}
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - ai-backend-network
+
+  mongo-express:
+    image: mongo-express
+    container_name: ai-backend-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password123
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_URL: mongodb://admin:password123@mongodb:27017/?authSource=admin
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: password123
+    depends_on:
+      - mongodb
+    networks:
+      - ai-backend-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: ai-backend-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - ai-backend-network
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
+  minio_data:
+
+networks:
+  ai-backend-network:
+    driver: bridge

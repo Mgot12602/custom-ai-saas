@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String        @id @default(uuid())
+  name               String
+  auth_user_id       String        @unique
+  hasVerifiedEmail   Boolean       @default(false)
+  hasVerifiedPhone   Boolean       @default(false)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  subscriptionId     String?       @unique
+  subscription       Subscription?
+  usageLogs          UsageLog[]
+}
+
+model UsageLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  metadata  Json?
+  timestamp DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([timestamp])
+}
+
+model Subscription {
+  id                 String      @id @default(uuid())
+  userId             String      @unique
+  status             String
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean     @default(true)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  stripeCustomerId   String?
+  pricingPlanId      String      @default("price_free_plan")
+  pricingPlan        PricingPlan @relation(fields: [pricingPlanId], references: [stripePriceId])
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+model PricingPlan {
+  id                   String         @id @default(uuid())
+  name                 String
+  price                Int
+  currency             String         @default("usd")
+  features             Json
+  isActive             Boolean        @default(true)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  stripePriceId        String         @unique
+  interval             String?
+  usageLimit           Int
+  subscriptions        Subscription[]
+}

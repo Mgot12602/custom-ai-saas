@@ -1,0 +1,42 @@
+{
+  "Navigation": {
+    "home": "Inici",
+    "dashboard": "Tauler",
+    "signIn": "Iniciar sessió",
+    "signUp": "Registrar-se",
+    "signOut": "Tancar sessió",
+    "profile": "Perfil",
+    "language": "Idioma"
+  },
+  "Languages": {
+    "en": "Anglès",
+    "es": "Espanyol",
+    "fr": "Francès",
+    "ca": "Català"
+  },
+  "Home": {
+    "title": "Next.js amb autenticació Clerk",
+    "description": "Una plantilla inicial per crear aplicacions segures amb Next.js i autenticació Clerk.",
+    "getStarted": "Començar",
+    "goToDashboard": "Anar al tauler",
+    "signIn": "Iniciar sessió"
+  },
+  "Dashboard": {
+    "title": "Tauler",
+    "welcome": "Benvingut al teu tauler!",
+    "protectedInfo": "Aquesta és una pàgina protegida. Només els usuaris autenticats poden veure aquest contingut.",
+    "userId": "El teu ID d'usuari:",
+    "whatsNext": "Què ve després?",
+    "exploreClerk": "Explora la documentació de Clerk",
+    "customizeProfile": "Personalitza el teu perfil d'usuari",
+    "addProtectedRoutes": "Afegeix més rutes protegides",
+    "implementRBAC": "Implementa control d'accés basat en rols",
+    "customizeApp": "Personalitza l'aplicació editant",
+    "addFeatures": "Afegeix noves funcionalitats o",
+    "backHome": "torna a l'inici"
+  },
+  "Footer": {
+    "clerkDocs": "Documentació de Clerk",
+    "nextDocs": "Documentació de Next.js"
+  }
+}

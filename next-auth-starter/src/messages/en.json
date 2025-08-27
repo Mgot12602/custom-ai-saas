@@ -1,0 +1,42 @@
+{
+  "Navigation": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "profile": "Profile",
+    "language": "Language"
+  },
+  "Languages": {
+    "en": "English",
+    "es": "Spanish",
+    "fr": "French",
+    "ca": "Catalan"
+  },
+  "Home": {
+    "title": "Next.js with Clerk Authentication",
+    "description": "A starter template for building secure applications with Next.js and Clerk authentication.",
+    "getStarted": "Get Started",
+    "goToDashboard": "Go to Dashboard",
+    "signIn": "Sign In"
+  },
+  "Dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome to your dashboard!",
+    "protectedInfo": "This is a protected page. Only authenticated users can view this content.",
+    "userId": "Your user ID:",
+    "whatsNext": "What's next?",
+    "exploreClerk": "Explore the Clerk documentation",
+    "customizeProfile": "Customize your user profile",
+    "addProtectedRoutes": "Add more protected routes",
+    "implementRBAC": "Implement role-based access control",
+    "customizeApp": "Customize the application by editing",
+    "addFeatures": "Add new features or",
+    "backHome": "go back home"
+  },
+  "Footer": {
+    "clerkDocs": "Clerk Documentation",
+    "nextDocs": "Next.js Documentation"
+  }
+}
