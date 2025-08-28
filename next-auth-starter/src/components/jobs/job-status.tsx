@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useAuth } from "@clerk/nextjs"
-import { getApiBase, getWsBase } from "@/lib/env"
 
 interface JobStatusProps {
   userId: string
@@ -11,14 +10,14 @@ interface JobStatusProps {
 type JobStatusValue = "idle" | "pending" | "processing" | "completed" | "failed"
 
 export function JobStatus({ userId }: JobStatusProps) {
-  const { getToken, isSignedIn } = useAuth()
+  const { isSignedIn } = useAuth()
   const [sessionId, setSessionId] = useState<string>("")
   const [jobId, setJobId] = useState<string | null>(null)
   const [status, setStatus] = useState<JobStatusValue>("idle")
   const [message, setMessage] = useState<string | null>(null)
   const [connecting, setConnecting] = useState(false)
   const [buttonDisabled, setButtonDisabled] = useState(false)
-  const wsRef = useRef<WebSocket | null>(null)
+  const eventSourceRef = useRef<EventSource | null>(null)
   const reconnectTimer = useRef<NodeJS.Timeout | null>(null)
 
   // Stable per-tab session id
@@ -31,52 +30,26 @@ export function JobStatus({ userId }: JobStatusProps) {
     setSessionId(sid)
   }, [])
 
-  const wsUrl = useMemo(() => {
-    try {
-      const base = getWsBase()
-      const url = `${base}/ws/${encodeURIComponent(userId)}`.replace(/([^:])\/\/+ws\//, "$1/ws/")
-      return url
-    } catch {
-      return ""
-    }
-  }, [userId])
-
-  // Connect WS
+  // Connect to SSE stream
   useEffect(() => {
-    if (!sessionId || !wsUrl || !isSignedIn) return
+    if (!sessionId || !isSignedIn) return
 
     let closedByClient = false
-    const connect = async () => {
+    const connect = () => {
       try {
         setConnecting(true)
-        const rawToken = await getToken().catch(() => null)
-        // Backend currently checks token starts with "clerk_"; prefix to satisfy
-        const token = `clerk_${rawToken ?? "anon"}`
-        const url = `${wsUrl}?token=${encodeURIComponent(token)}`
-        const ws = new WebSocket(url)
-        wsRef.current = ws
+        const url = `/api/jobs/status-stream?session_id=${encodeURIComponent(sessionId)}`
+        const eventSource = new EventSource(url)
+        eventSourceRef.current = eventSource
 
-        ws.onopen = () => {
+        eventSource.onopen = () => {
           setConnecting(false)
         }
-        ws.onclose = () => {
-          wsRef.current = null
-          if (!closedByClient) {
-            // Attempt reconnect with backoff
-            if (!reconnectTimer.current) {
-              reconnectTimer.current = setTimeout(() => {
-                reconnectTimer.current = null
-                connect()
-              }, 1500)
-            }
-          }
-        }
-        ws.onerror = () => {
-          // Let onclose handle reconnect
-        }
-        ws.onmessage = (ev) => {
+
+        eventSource.onmessage = (event) => {
           try {
-            const data = JSON.parse(ev.data)
+            const data = JSON.parse(event.data)
+            
             if (data?.type === "job_status_update") {
               // Only handle updates for this tab's session
               if (data.session_id && data.session_id !== sessionId) return
@@ -87,10 +60,33 @@ export function JobStatus({ userId }: JobStatusProps) {
                 setMessage(data.message ?? null)
                 setButtonDisabled(newStatus === "pending" || newStatus === "processing")
               }
+            } else if (data?.type === "connection") {
+              console.log('[JobStatus] SSE connection status:', data.status)
+            } else if (data?.type === "error") {
+              console.error('[JobStatus] SSE error:', data.message)
             }
-          } catch {}
+            // Ignore heartbeat messages
+          } catch (error) {
+            console.error('[JobStatus] Error parsing SSE message:', error)
+          }
         }
-      } catch {
+
+        eventSource.onerror = () => {
+          eventSourceRef.current = null
+          setConnecting(false)
+          
+          if (!closedByClient) {
+            // Attempt reconnect with backoff
+            if (!reconnectTimer.current) {
+              reconnectTimer.current = setTimeout(() => {
+                reconnectTimer.current = null
+                connect()
+              }, 1500)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[JobStatus] Error connecting to SSE:', error)
         setConnecting(false)
       }
     }
@@ -102,10 +98,12 @@ export function JobStatus({ userId }: JobStatusProps) {
         clearTimeout(reconnectTimer.current)
         reconnectTimer.current = null
       }
-      wsRef.current?.close()
-      wsRef.current = null
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close()
+        eventSourceRef.current = null
+      }
     }
-  }, [wsUrl, sessionId, isSignedIn, getToken])
+  }, [sessionId, isSignedIn])
 
   const triggerJob = async () => {
     if (!isSignedIn) {
@@ -117,10 +115,6 @@ export function JobStatus({ userId }: JobStatusProps) {
       setStatus("pending")
       setMessage("Submitting job...")
 
-      const apiBase = getApiBase()
-      const url = `${apiBase}/api/v1/jobs/`
-      const token = await getToken().catch(() => null)
-
       const payload = {
         session_id: sessionId,
         job_type: "text_generation",
@@ -130,17 +124,18 @@ export function JobStatus({ userId }: JobStatusProps) {
         },
       }
 
-      const headers: Record<string, string> = { "Content-Type": "application/json" }
-      if (token) headers["Authorization"] = `Bearer ${token}`
+      const res = await fetch('/api/jobs/trigger', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
 
-      const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(payload) })
+      const data = await res.json()
 
       if (res.status === 409) {
         // Active job exists for this session
-        interface ConflictDetail { detail?: { error?: string; existing_job_id?: string; session_id?: string } }
-        const detail: ConflictDetail | null = await res.json().catch(() => null)
-        if (detail?.detail?.existing_job_id) {
-          setJobId(detail.detail.existing_job_id)
+        if (data?.data?.existing_job_id) {
+          setJobId(data.data.existing_job_id)
           setStatus("processing")
           setMessage("Resuming active job...")
           setButtonDisabled(true)
@@ -148,23 +143,22 @@ export function JobStatus({ userId }: JobStatusProps) {
         }
       }
 
-      interface CreateJobResponse { id: string; status?: string; detail?: string }
-      const data: CreateJobResponse | null = await res.json().catch(() => null)
       if (!res.ok) {
         setStatus("failed")
-        setMessage(data?.detail || "Failed to create job")
+        setMessage(data?.message || data?.error || "Failed to create job")
         setButtonDisabled(false)
         return
       }
 
-      if (!data) {
+      if (!data?.success || !data?.data) {
         setStatus("failed")
         setMessage("Invalid server response")
         setButtonDisabled(false)
         return
       }
-      setJobId(data.id)
-      setStatus((String(data.status || "pending").toLowerCase() as JobStatusValue) || "pending")
+
+      setJobId(data.data.id)
+      setStatus((String(data.data.status || "pending").toLowerCase() as JobStatusValue) || "pending")
       setMessage(null)
       setButtonDisabled(true)
     } catch (error) {

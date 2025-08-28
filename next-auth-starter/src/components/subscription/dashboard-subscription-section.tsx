@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useUser, useAuth } from '@clerk/nextjs'
 import CancelSubscriptionButton from './CancelSubscriptionButton'
-import { getApiBase } from '@/lib/env'
 
 interface UsageStatus {
   currentUsage: number
@@ -100,19 +99,14 @@ export function DashboardSubscriptionSection({ showTestActions = true }: Dashboa
     }
   }
 
-  // Trigger AI backend job with detailed client-side logging
-  const { getToken, isSignedIn } = useAuth()
+  // Trigger AI backend job via Next.js API route
+  const { isSignedIn } = useAuth()
   const triggerBackendJob = async () => {
     if (!isSignedIn) {
       alert('Please sign in first')
       return
     }
     try {
-      const apiBase = getApiBase()
-      const url = `${apiBase}/api/v1/jobs/`
-      const template = process.env.NEXT_PUBLIC_CLERK_JWT_TEMPLATE
-      const token = await getToken({ template: template || undefined })
-
       const payload = {
         job_type: 'text_generation',
         input_data: {
@@ -121,31 +115,27 @@ export function DashboardSubscriptionSection({ showTestActions = true }: Dashboa
         }
       }
 
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      }
-      if (token) headers['Authorization'] = `Bearer ${token}`
-
-      console.debug('[Dashboard] Triggering backend job', { url, payload, hasToken: Boolean(token), template })
-      const res = await fetch(url, {
+      console.debug('[Dashboard] Triggering backend job via API route', { payload })
+      const res = await fetch('/api/jobs/trigger', {
         method: 'POST',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(payload),
       })
 
-      const text = await res.text()
-      console.debug('[Dashboard] Backend response', { status: res.status, text })
+      const data = await res.json()
+      console.debug('[Dashboard] API response', { status: res.status, data })
+      
       if (!res.ok) {
-        alert(`❌ Failed to trigger job (${res.status}). See console for details.`)
+        alert(`❌ Failed to trigger job (${res.status}): ${data.message || data.error}`)
         return
       }
 
-      // Try to parse JSON if possible
-      try {
-        const data = JSON.parse(text)
-        alert(`✅ Job created! ID: ${data.id}\nStatus: ${data.status}`)
-      } catch {
-        alert('✅ Job triggered! (non-JSON response)')
+      if (data.success && data.data) {
+        alert(`✅ Job created! ID: ${data.data.id}\nStatus: ${data.data.status}`)
+      } else {
+        alert('✅ Job triggered successfully!')
       }
     } catch (err) {
       console.error('[Dashboard] Error triggering backend job', err)
