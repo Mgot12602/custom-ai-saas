@@ -42,16 +42,16 @@ services:
   # PostgreSQL Database for Next.js Frontend
   postgres:
     image: postgres:16
-    container_name: next-auth-postgres
+    container_name: postgres-db
     restart: unless-stopped
     ports:
-      - "${POSTGRES_PORT:-5433}:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-next_auth_db}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     networks:
       - ai-backend-network
 
@@ -138,7 +138,7 @@ services:
       - ai-backend-network
 
 volumes:
-  postgres_data:
+  postgres-data:
   mongodb_data:
   redis_data:
   minio_data:

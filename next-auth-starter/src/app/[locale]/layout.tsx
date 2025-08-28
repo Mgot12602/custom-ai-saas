@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { locales } from "@/i18n/routing";
 import { ensureBackendUser } from "@/server/ensureBackendUser";
+import { ensureUserExists } from "@/lib/ensure-user-exists";
 
 import "@/app/globals.css";
 
@@ -74,6 +75,7 @@ export default async function LocaleLayout({
 
   // Ensure AI backend user on the server side (idempotent) without blocking render
   void ensureBackendUser();
+  void ensureUserExists()
 
   return (
     <ClerkProvider>
