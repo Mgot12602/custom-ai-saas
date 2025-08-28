@@ -4,12 +4,18 @@ import { PrismaClient } from '@/generated/prisma'
 
 const prisma = new PrismaClient()
 
-// Only enable in development
-if (process.env.NODE_ENV === 'production') {
-  throw new Error('Test API routes should not be available in production')
-}
+// Return 404 in production instead of throwing error during build
+const isProduction = process.env.NODE_ENV === 'production'
 
 export async function GET() {
+  // Return 404 in production
+  if (isProduction) {
+    return NextResponse.json(
+      { error: 'Not found' },
+      { status: 404 }
+    )
+  }
+
   try {
     const { userId } = await auth()
     
@@ -54,6 +60,14 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  // Return 404 in production
+  if (isProduction) {
+    return NextResponse.json(
+      { error: 'Not found' },
+      { status: 404 }
+    )
+  }
+
   try {
     const { userId } = await auth()
     
