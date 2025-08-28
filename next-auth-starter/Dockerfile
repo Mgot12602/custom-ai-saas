@@ -20,28 +20,11 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
-# Make scripts executable (they're already copied with COPY . .)
+# Make scripts executable
 RUN chmod +x ./scripts/*.sh
-
-# Build the Next.js application
-RUN npm run build
 
 # Expose the port the app runs on
 EXPOSE 3000
 
-# Create a simple entrypoint that handles database initialization
-ENTRYPOINT ["/bin/sh", "-c", "\
-  echo '🚀 Starting Next.js application with database initialization...' && \
-  echo '⏳ Waiting for PostgreSQL to be ready...' && \
-  until pg_isready -h postgres -p 5432 -U postgres; do \
-    echo 'PostgreSQL is unavailable - sleeping' && sleep 2; \
-  done && \
-  echo '✅ PostgreSQL is ready!' && \
-  echo '🔧 Generating Prisma client...' && \
-  npx prisma generate && \
-  echo '🗄️ Pushing database schema...' && \
-  npx prisma db push && \
-  echo '📊 Running seed script...' && \
-  npm run db:seed && \
-  echo '🎉 Database initialization complete! Starting Next.js application...' && \
-  exec npm start"]
+# Use the startup script that handles fresh builds with current environment
+ENTRYPOINT ["./scripts/startup.sh"]
