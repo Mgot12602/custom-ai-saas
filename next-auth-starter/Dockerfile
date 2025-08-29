@@ -17,6 +17,8 @@ RUN npm ci
 # Copy the rest of the application code
 COPY . .
 
+# SSL certificates will be mounted as volume
+
 # Generate Prisma client
 RUN npx prisma generate
 
