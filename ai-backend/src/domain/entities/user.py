@@ -53,6 +53,7 @@ class UserCreate(BaseModel):
 
 
 class UserUpdate(BaseModel):
+    clerk_id: Optional[str] = None
     email: Optional[str] = None
     name: Optional[str] = None
     is_active: Optional[bool] = None

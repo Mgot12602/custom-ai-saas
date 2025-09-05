@@ -31,8 +31,13 @@ class UserUseCases:
         user = await self.user_repository.get_by_id(user_id)
         return self._to_response(user) if user else None
 
+    async def get_user_by_email(self, email: str) -> Optional[UserResponse]:
+        user = await self.user_repository.get_by_email(email)
+        return self._to_response(user) if user else None
+
     async def update_user(self, user_id: str, user_request: UserUpdateRequest) -> Optional[UserResponse]:
         user_data = UserUpdate(
+            clerk_id=user_request.clerk_id,
             email=user_request.email,
             name=user_request.name,
             is_active=user_request.is_active

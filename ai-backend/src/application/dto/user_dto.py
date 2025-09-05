@@ -20,6 +20,7 @@ class UserCreateRequest(BaseModel):
 
 
 class UserUpdateRequest(BaseModel):
+    clerk_id: Optional[str] = None
     email: Optional[str] = None
     name: Optional[str] = None
     is_active: Optional[bool] = None

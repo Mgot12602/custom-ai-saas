@@ -48,6 +48,22 @@ async def create_user(
         response.status_code = status.HTTP_200_OK
         return existing
 
+    # Check if a user with the same email exists (handles case where user was removed from Clerk but exists in DB)
+    existing_by_email = await use_cases.get_user_by_email(derived_request.email)
+    if existing_by_email:
+        logger.info("User with email exists, updating clerk_id | email=%s | old_clerk_id=%s | new_clerk_id=%s", 
+                   derived_request.email, existing_by_email.clerk_id, derived_request.clerk_id)
+        # Update the existing user's clerk_id
+        update_request = UserUpdateRequest(clerk_id=derived_request.clerk_id)
+        updated_user = await use_cases.update_user(existing_by_email.id, update_request)
+        if updated_user:
+            response.status_code = status.HTTP_200_OK
+            return updated_user
+        else:
+            logger.error("Failed to update clerk_id for existing user | email=%s", derived_request.email)
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                              detail="Failed to update user clerk_id")
+
     try:
         created = await use_cases.create_user(derived_request)
         logger.info("User created successfully | clerk_id=%s", created.clerk_id)
