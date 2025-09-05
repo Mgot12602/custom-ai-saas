@@ -33,6 +33,7 @@ export function DashboardSubscriptionSection({ showTestActions = true }: Dashboa
   const [usageStatus, setUsageStatus] = useState<UsageStatus | null>(null)
   const [subscriptionInfo, setSubscriptionInfo] = useState<SubscriptionInfo | null>(null)
   const [loading, setLoading] = useState(true)
+  const [activeJobSession, setActiveJobSession] = useState<string | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -133,7 +134,15 @@ export function DashboardSubscriptionSection({ showTestActions = true }: Dashboa
       }
 
       if (data.success && data.data) {
-        alert(`✅ Job created! ID: ${data.data.id}\nStatus: ${data.data.status}`)
+        const jobId = data.data.id
+        const sessionId = data.data.session_id || jobId // Use session_id if available, otherwise fallback to job ID
+        
+        alert(`✅ Job created! ID: ${jobId}\nStatus: ${data.data.status}\nMonitoring for completion...`)
+        
+        // Start monitoring job status via WebSocket stream
+        if (sessionId) {
+          monitorJobCompletion(sessionId)
+        }
       } else {
         alert('✅ Job triggered successfully!')
       }
@@ -141,6 +150,82 @@ export function DashboardSubscriptionSection({ showTestActions = true }: Dashboa
       console.error('[Dashboard] Error triggering backend job', err)
       alert('❌ Error triggering backend job')
     }
+  }
+
+  // Monitor job completion via WebSocket stream
+  const monitorJobCompletion = (sessionId: string) => {
+    if (activeJobSession) {
+      console.log('[Dashboard] Already monitoring a job, skipping new monitoring')
+      return
+    }
+
+    setActiveJobSession(sessionId)
+    console.log(`[Dashboard] Starting to monitor job session: ${sessionId}`)
+
+    const eventSource = new EventSource(`/api/jobs/status-stream?session_id=${encodeURIComponent(sessionId)}`)
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        console.log('[Dashboard] Job status update:', data)
+        
+        if (data.type === 'job_status_update') {
+          const { status, session_id } = data
+          
+          // Only process updates for our session
+          if (session_id === sessionId) {
+            if (status === 'completed') {
+              console.log('[Dashboard] Job completed successfully! Fetching updated usage status...')
+              
+              // Fetch updated usage status after successful completion
+              fetchUsageStatus().then(() => {
+                console.log('[Dashboard] Usage status updated after job completion')
+                alert('✅ Job completed successfully! Usage status has been updated.')
+              }).catch((error) => {
+                console.error('[Dashboard] Error fetching usage status after job completion:', error)
+                alert('✅ Job completed successfully! (Note: Could not refresh usage status)')
+              })
+              
+              // Clean up monitoring
+              eventSource.close()
+              setActiveJobSession(null)
+            } else if (status === 'failed' || status === 'error') {
+              console.log('[Dashboard] Job failed or errored')
+              alert(`❌ Job ${status}. Check console for details.`)
+              
+              // Clean up monitoring
+              eventSource.close()
+              setActiveJobSession(null)
+            }
+            // For other statuses like 'running', 'queued', etc., just log and continue monitoring
+          }
+        } else if (data.type === 'connection' && data.status === 'disconnected') {
+          console.log('[Dashboard] WebSocket connection closed')
+          setActiveJobSession(null)
+        } else if (data.type === 'error') {
+          console.error('[Dashboard] WebSocket error:', data.message)
+          eventSource.close()
+          setActiveJobSession(null)
+        }
+      } catch (error) {
+        console.error('[Dashboard] Error parsing job status update:', error)
+      }
+    }
+    
+    eventSource.onerror = (error) => {
+      console.error('[Dashboard] EventSource error:', error)
+      eventSource.close()
+      setActiveJobSession(null)
+    }
+    
+    // Clean up after 5 minutes to prevent indefinite monitoring
+    setTimeout(() => {
+      if (eventSource.readyState !== EventSource.CLOSED) {
+        console.log('[Dashboard] Timeout: Closing job monitoring after 5 minutes')
+        eventSource.close()
+        setActiveJobSession(null)
+      }
+    }, 5 * 60 * 1000) // 5 minutes
   }
 
   const getPlanColor = (status: string) => {
