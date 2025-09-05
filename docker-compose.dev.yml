@@ -1,24 +1,61 @@
 services:
+  # Next.js Frontend Application
+  frontend:
+    build:
+      context: ./next-auth-starter
+      dockerfile: Dockerfile
+    container_name: next-auth-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    env_file:
+      - ./next-auth-starter/.env.dev
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/next_auth_db
+    depends_on:
+      - postgres
+      - api
+    networks:
+      - ai-backend-network
+
+  # AI Backend API
   api:
     build:
-      context: .
+      context: ./ai-backend
       dockerfile: Dockerfile.api
     container_name: ai-backend-api
     restart: unless-stopped
     ports:
       - "${DOCKER_API_PORT}:${API_PORT}"
     env_file:
-      - .env
+      - ./ai-backend/.env.dev
     environment:
-      MONGODB_URL: ${DOCKER_MONGODB_URL}
-      DATABASE_NAME: ${DATABASE_NAME}
-      REDIS_URL: ${DOCKER_REDIS_URL}
+      MONGODB_URL: ${DOCKER_MONGODB_URL:-mongodb://ai_backend_user:ai_backend_password@mongodb:27017/ai_backend?authSource=ai_backend}
+      DATABASE_NAME: ${DATABASE_NAME:-ai_backend}
+      REDIS_URL: ${DOCKER_REDIS_URL:-redis://redis:6379/0}
     depends_on:
       - mongodb
       - redis
     networks:
       - ai-backend-network
 
+  # PostgreSQL Database for Next.js Frontend
+  postgres:
+    image: postgres:16
+    container_name: postgres-db
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-next_auth_db}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - ai-backend-network
+
+  # MongoDB Database for AI Backend
   mongodb:
     image: mongo:7.0
     container_name: ai-backend-mongodb
@@ -31,7 +68,7 @@ services:
       MONGO_INITDB_DATABASE: ai_backend
     volumes:
       - mongodb_data:/data/db
-      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./ai-backend/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
     networks:
       - ai-backend-network
 
@@ -49,16 +86,15 @@ services:
 
   celery-worker:
     build:
-      context: .
-      dockerfile: Dockerfile.worker
+      context: ./worker
+      dockerfile: Dockerfile
     container_name: ai-backend-celery
     restart: unless-stopped
-    command: ["python", "celery_worker.py"]
+    command: python worker.py
     env_file:
-      - .env
+      - ./worker/.env
     environment:
       MONGODB_URL: ${DOCKER_MONGODB_URL}
-      DATABASE_NAME: ${DATABASE_NAME}
       REDIS_URL: ${DOCKER_REDIS_URL}
     depends_on:
       - mongodb
@@ -84,7 +120,6 @@ services:
     networks:
       - ai-backend-network
 
-  # Optional: MinIO for S3-compatible storage
   minio:
     image: minio/minio:latest
     container_name: ai-backend-minio
@@ -102,6 +137,7 @@ services:
       - ai-backend-network
 
 volumes:
+  postgres-data:
   mongodb_data:
   redis_data:
   minio_data:

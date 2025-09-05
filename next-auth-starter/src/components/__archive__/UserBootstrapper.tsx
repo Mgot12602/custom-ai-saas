@@ -24,7 +24,7 @@ export default function UserBootstrapper() {
     const run = async () => {
 
       try {
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+        const apiBase = process.env.API_BASE_URL || "http://localhost:8000";
         const createUrl = `${apiBase}/api/v1/users`;
 
         console.group("[UserBootstrapper] Creating user in AI backend");

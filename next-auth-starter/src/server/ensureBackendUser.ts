@@ -11,9 +11,9 @@ export async function ensureBackendUser(): Promise<void> {
 
     const user = await currentUser();
     // Determine API base URL (prefer server-only var)
-    const apiBase = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL;
+    const apiBase = process.env.API_BASE_URL 
     if (!apiBase) {
-      console.warn("[ensureBackendUser] API_BASE_URL or NEXT_PUBLIC_API_BASE_URL not set");
+      console.warn("[ensureBackendUser] API_BASE_URL not set");
       return;
     }
 

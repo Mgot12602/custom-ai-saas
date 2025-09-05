@@ -8,8 +8,6 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { locales } from "@/i18n/routing";
-import { ensureBackendUser } from "@/server/ensureBackendUser";
-import { ensureUserExists } from "@/lib/ensure-user-exists";
 
 import "@/app/globals.css";
 
@@ -73,9 +71,8 @@ export default async function LocaleLayout({
     }
   }
 
-  // Ensure AI backend user on the server side (idempotent) without blocking render
-  void ensureBackendUser();
-  void ensureUserExists()
+  // Don't call user creation functions in layout - they should only run on authenticated routes
+  // Move ensureBackendUser() and ensureUserExists() to dashboard and other protected routes
 
   return (
     <ClerkProvider>
