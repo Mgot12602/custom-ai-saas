@@ -2,8 +2,7 @@
 
 import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/navigation"
-import { DashboardSubscriptionSection } from '@/components/subscription/dashboard-subscription-section'
-import { JobStatus } from '@/components/jobs/job-status'
+import { GenerationSection } from '@/components/dashboard/generation-section'
 
 interface DashboardClientProps {
   userId: string
@@ -61,13 +60,8 @@ export function DashboardClient({ userId, locale }: DashboardClientProps) {
         </div>
       </div>
 
-      {/* Add Subscription Section */}
-      <DashboardSubscriptionSection />
-
-      {/* Real-time Job Status */}
-      <div className="mt-6">
-        <JobStatus userId={userId} />
-      </div>
+      {/* Generation Section - combines job triggering and subscription management */}
+      <GenerationSection userId={userId} />
     </div>
   )
 }

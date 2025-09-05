@@ -3,6 +3,8 @@ import { auth } from '@clerk/nextjs/server'
 import { UsageTracker } from '@/lib/usage-tracker'
 
 export async function GET() {
+  console.log(`[DEBUG] GET /api/subscription/usage called at ${new Date().toISOString()}`)
+  
   try {
     const { userId } = await auth()
     

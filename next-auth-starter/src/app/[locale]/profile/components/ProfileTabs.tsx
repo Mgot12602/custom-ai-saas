@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import ProfileInfo from './ProfileInfo'
 import SecuritySettings from './SecuritySettings'
-import { DashboardSubscriptionSection } from '@/components/subscription/dashboard-subscription-section'
+import { GenerationSection } from '@/components/dashboard/generation-section'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { usePathname } from '@/i18n/navigation'
+import { useUser } from '@clerk/nextjs'
 
 type TabType = 'profile' | 'security' | 'subscription' | 'account'
 
@@ -19,6 +20,7 @@ const tabs = [
 export default function ProfileTabs() {
   const [activeTab, setActiveTab] = useState<TabType>('profile')
   const pathname = usePathname()
+  const { user } = useUser()
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -27,7 +29,7 @@ export default function ProfileTabs() {
       case 'security':
         return <SecuritySettings />
       case 'subscription':
-        return <DashboardSubscriptionSection showTestActions={false} />
+        return <GenerationSection userId={user?.id || ''} showTestActions={false} />
       case 'account':
         return <AccountSettings pathname={pathname} />
       default:
