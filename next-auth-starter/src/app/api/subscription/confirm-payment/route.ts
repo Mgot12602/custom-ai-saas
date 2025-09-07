@@ -78,6 +78,11 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // Clear usage logs to give user fresh start with new plan
+    await prisma.usageLog.deleteMany({
+      where: { userId: user.id }
+    })
+
     return NextResponse.json({
       success: true,
       message: 'Subscription activated successfully'
