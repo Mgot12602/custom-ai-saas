@@ -299,7 +299,9 @@ export function GenerationSection({ userId, showTestActions = true }: Generation
   }
 
   const getUsagePercentage = (remaining: number, limit: number) => {
+
     const used = limit - remaining
+    console.log("used",used,"limit", limit, "remaining", remaining  )
     return Math.min((used / limit) * 100, 100)
   }
 
@@ -337,6 +339,7 @@ export function GenerationSection({ userId, showTestActions = true }: Generation
   const primaryLimit = usageStatus?.limits[primaryAction] || 0
   const primaryRemaining = usageStatus?.remainingUsage[primaryAction] || 0
   const usagePercentage = getUsagePercentage(primaryRemaining, primaryLimit)
+  console.log("usagePercentage",usagePercentage)
 
   const isPaidPlan = usageStatus?.subscriptionStatus && !usageStatus.subscriptionStatus.toLowerCase().includes('free')
   const isActiveSubscription = subscriptionInfo?.subscription && 
@@ -472,13 +475,23 @@ export function GenerationSection({ userId, showTestActions = true }: Generation
                     {primaryLimit - primaryRemaining} / {primaryLimit}
                   </span>
                 </div>
+                {/* Debug info - remove this once working */}
+                <div className="text-xs text-gray-500 mb-1">
+                  Debug: {usagePercentage.toFixed(1)}% | Color: {usagePercentage > 90 ? 'error' : usagePercentage > 70 ? 'warning' : 'success'}
+                </div>
                 <div className="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2">
                   <div 
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      usagePercentage > 90 ? 'bg-error-500' : 
-                      usagePercentage > 70 ? 'bg-warning-500' : 'bg-success-500'
-                    }`}
-                    style={{ width: `${usagePercentage}%` }}
+                    className="h-2 rounded-full transition-all duration-300"
+                    style={{ 
+                      width: `${Math.max(usagePercentage, 2)}%`,
+                      minWidth: usagePercentage > 0 ? '8px' : '0px',
+                      backgroundColor: usagePercentage > 90 
+                        ? 'var(--color-error-500)' 
+                        : usagePercentage > 70 
+                        ? 'var(--color-warning-500)' 
+                        : 'var(--color-success-500)'
+                    }}
+                    title={`Usage: ${usagePercentage.toFixed(1)}%`}
                   ></div>
                 </div>
               </div>
