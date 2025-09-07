@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { stripe, SubscriptionService } from '@/lib/stripe'
-import { PrismaClient } from '@/generated/prisma'
-
-const prisma = new PrismaClient()
+import { SubscriptionService } from '@/lib/stripe'
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,62 +23,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Retrieve the payment intent to verify it succeeded
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
-
-    if (paymentIntent.status !== 'succeeded') {
-      return NextResponse.json(
-        { error: 'Payment not successful' },
-        { status: 400 }
-      )
-    }
-
-    if (paymentIntent.metadata.userId !== userId) {
-      return NextResponse.json(
-        { error: 'Payment intent does not belong to user' },
-        { status: 403 }
-      )
-    }
-
-    const priceId = paymentIntent.metadata.priceId
-    const customerId = paymentIntent.customer as string
-
-    if (!priceId) {
-      return NextResponse.json(
-        { error: 'No price ID found in payment metadata' },
-        { status: 400 }
-      )
-    }
-
-    // Get user and their existing subscription
-    const user = await prisma.user.findUnique({
-      where: { auth_user_id: userId },
-      include: { subscription: true }
-    })
-
-    if (!user?.subscription) {
-      return NextResponse.json(
-        { error: 'No subscription found for user' },
-        { status: 404 }
-      )
-    }
-
-    // Simply update the existing subscription to active with the new plan
-    await prisma.subscription.update({
-      where: { userId: user.id },
-      data: {
-        status: 'active',
-        pricingPlanId: priceId,
-        stripeCustomerId: customerId,
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
-      }
-    })
-
-    // Clear usage logs to give user fresh start with new plan
-    await prisma.usageLog.deleteMany({
-      where: { userId: user.id }
-    })
+    // Use SubscriptionService to handle payment confirmation and subscription creation
+    await SubscriptionService.confirmPaymentAndCreateSubscription(userId, paymentIntentId)
 
     return NextResponse.json({
       success: true,
@@ -90,8 +33,12 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Payment confirmation error:', error)
+    
+    // Handle specific error types
+    const errorMessage = error instanceof Error ? error.message : 'Failed to confirm payment'
+    
     return NextResponse.json(
-      { error: 'Failed to confirm payment' },
+      { error: errorMessage },
       { status: 500 }
     )
   }

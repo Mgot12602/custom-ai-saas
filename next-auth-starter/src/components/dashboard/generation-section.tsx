@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useUser, useAuth } from '@clerk/nextjs'
 import CancelSubscriptionButton from '../subscription/CancelSubscriptionButton'
+import ReactivateSubscriptionButton from '../subscription/ReactivateSubscriptionButton'
 
 interface UsageStatus {
   currentUsage: number
@@ -319,6 +320,47 @@ export function GenerationSection({ userId, showTestActions = true }: Generation
     fetchSubscriptionInfo()
   }
 
+  const handleReactivateComplete = () => {
+    // Refresh subscription info after reactivation
+    fetchSubscriptionInfo()
+  }
+
+  const isPaidPlan = usageStatus?.subscriptionStatus && !usageStatus.subscriptionStatus.toLowerCase().includes('free')
+  const getSubscriptionStatusDisplay = () => {
+    if (!subscriptionInfo?.subscription) return 'Free'
+    
+    const sub = subscriptionInfo.subscription
+    const status = sub.status
+    
+    if (status === 'canceled' || status === 'cancelled') {
+      if (sub.currentPeriodEnd && new Date(sub.currentPeriodEnd) > new Date()) {
+        return 'Cancelled (Active until period end)'
+      }
+      return 'Cancelled'
+    }
+    
+    if (status === 'active') return 'Active'
+    if (status === 'trialing') return 'Trial'
+    
+    return status || 'Free'
+  }
+
+  const getStatusColor = () => {
+    if (!subscriptionInfo?.subscription) return 'text-secondary-600 dark:text-secondary-400'
+    
+    const status = subscriptionInfo.subscription.status
+    
+    if (status === 'canceled' || status === 'cancelled') {
+      return 'text-warning-600 dark:text-warning-400'
+    }
+    
+    if (status === 'active' || status === 'trialing') {
+      return 'text-success-600 dark:text-success-400'
+    }
+    
+    return 'text-secondary-600 dark:text-secondary-400'
+  }
+
   if (!user) {
     return <div>Please sign in to view generation details.</div>
   }
@@ -340,14 +382,6 @@ export function GenerationSection({ userId, showTestActions = true }: Generation
   const primaryRemaining = usageStatus?.remainingUsage[primaryAction] || 0
   const usagePercentage = getUsagePercentage(primaryRemaining, primaryLimit)
   console.log("usagePercentage",usagePercentage)
-
-  const isPaidPlan = usageStatus?.subscriptionStatus && !usageStatus.subscriptionStatus.toLowerCase().includes('free')
-  const isActiveSubscription = subscriptionInfo?.subscription && 
-    (subscriptionInfo.subscription.status === 'active' || 
-     subscriptionInfo.subscription.status === 'trialing' ||
-     (subscriptionInfo.subscription.status === 'canceled' && 
-      subscriptionInfo.subscription.currentPeriodEnd && 
-      new Date(subscriptionInfo.subscription.currentPeriodEnd) > new Date()))
 
   return (
     <div className="space-y-6">
@@ -417,14 +451,8 @@ export function GenerationSection({ userId, showTestActions = true }: Generation
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-secondary-600 dark:text-secondary-400">Status:</span>
-                <span className={`font-medium ${
-                  isActiveSubscription 
-                    ? 'text-success-600 dark:text-success-400' 
-                    : subscriptionInfo.subscription?.status === 'canceled'
-                    ? 'text-warning-600 dark:text-warning-400'
-                    : 'text-secondary-600 dark:text-secondary-400'
-                }`}>
-                  {isActiveSubscription ? 'Active' : subscriptionInfo.subscription?.status || 'Free'}
+                <span className={`font-medium ${getStatusColor()}`}>
+                  {getSubscriptionStatusDisplay()}
                 </span>
               </div>
 
@@ -447,10 +475,13 @@ export function GenerationSection({ userId, showTestActions = true }: Generation
                 <p className="text-warning-800 dark:text-warning-200 text-sm">
                   <strong>Subscription Canceled:</strong> You&apos;ll continue to have access until {new Date(subscriptionInfo.subscription.currentPeriodEnd).toLocaleDateString()}. Your subscription won&apos;t renew.
                 </p>
+                <div className="mt-3">
+                  <ReactivateSubscriptionButton onReactivate={handleReactivateComplete} />
+                </div>
               </div>
             )}
 
-            {isPaidPlan && isActiveSubscription && subscriptionInfo.subscription?.status !== 'canceled' && (
+            {isPaidPlan && (subscriptionInfo.subscription?.status === 'active' || subscriptionInfo.subscription?.status === 'trialing') && (
               <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-700">
                 <CancelSubscriptionButton onCancel={handleCancelComplete} />
               </div>
