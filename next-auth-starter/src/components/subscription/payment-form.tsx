@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import {
   Elements,
@@ -21,42 +21,16 @@ interface PaymentFormProps {
   onCancel?: () => void
 }
 
-function CheckoutForm({ priceId, planName, onSuccess, onError, onCancel }: PaymentFormProps) {
+interface CheckoutFormProps extends PaymentFormProps {
+  clientSecret: string
+  subscriptionId: string
+}
+
+function CheckoutForm({ priceId, planName, onSuccess, onError, onCancel, clientSecret, subscriptionId }: CheckoutFormProps) {
   const stripe = useStripe()
   const elements = useElements()
   const [isLoading, setIsLoading] = useState(false)
-  const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-
-  // Create Payment Intent when component mounts
-  useEffect(() => {
-    const createPaymentIntent = async () => {
-      try {
-        const response = await fetch('/api/subscription/create-payment-intent', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ priceId }),
-        })
-
-        const data = await response.json()
-        
-        if (response.ok) {
-          setClientSecret(data.clientSecret)
-        } else {
-          setErrorMessage(data.error || 'Failed to create payment intent')
-          onError?.(data.error || 'Failed to create payment intent')
-        }
-      } catch (error) {
-        const errorMsg = 'Network error. Please try again.'
-        setErrorMessage(errorMsg)
-        onError?.(errorMsg)
-      }
-    }
-
-    createPaymentIntent()
-  }, [priceId, onError])
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -78,7 +52,7 @@ function CheckoutForm({ priceId, planName, onSuccess, onError, onCancel }: Payme
         return
       }
 
-      // Confirm payment with promise-based approach
+      // Confirm payment for the subscription's invoice PaymentIntent
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         clientSecret,
@@ -92,8 +66,8 @@ function CheckoutForm({ priceId, planName, onSuccess, onError, onCancel }: Payme
         setErrorMessage(error.message || 'Payment failed')
         onError?.(error.message || 'Payment failed')
       } else if (paymentIntent?.status === 'succeeded') {
-        // Payment succeeded! Create subscription immediately
-        console.log('Payment successful:', paymentIntent.id)
+        // Payment succeeded! Finalize subscription immediately on server
+        console.log('Subscription invoice paid:', paymentIntent.id)
         
         try {
           const confirmResponse = await fetch('/api/subscription/confirm-payment', {
@@ -102,21 +76,21 @@ function CheckoutForm({ priceId, planName, onSuccess, onError, onCancel }: Payme
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              paymentIntentId: paymentIntent.id
+              subscriptionId,
             }),
           })
 
           const confirmData = await confirmResponse.json()
 
           if (confirmResponse.ok) {
-            console.log('Subscription created:', confirmData.subscriptionId)
+            console.log('Subscription finalized:', confirmData)
             onSuccess?.()
           } else {
-            setErrorMessage(confirmData.error || 'Failed to create subscription')
-            onError?.(confirmData.error || 'Failed to create subscription')
+            setErrorMessage(confirmData.error || 'Failed to finalize subscription')
+            onError?.(confirmData.error || 'Failed to finalize subscription')
           }
         } catch (error) {
-          const errorMsg = 'Failed to create subscription. Please contact support.'
+          const errorMsg = 'Failed to finalize subscription. Please contact support.'
           setErrorMessage(errorMsg)
           onError?.(errorMsg)
         }
@@ -130,7 +104,7 @@ function CheckoutForm({ priceId, planName, onSuccess, onError, onCancel }: Payme
     }
   }
 
-  if (!clientSecret) {
+  if (!clientSecret || !subscriptionId) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cta-500"></div>
@@ -200,10 +174,11 @@ function CheckoutForm({ priceId, planName, onSuccess, onError, onCancel }: Payme
 
 export default function PaymentForm(props: PaymentFormProps) {
   const [clientSecret, setClientSecret] = useState<string | null>(null)
-
+  const [subscriptionId, setSubscriptionId] = useState<string | null>(null)
+  const effectRan = useRef(false)
   // Get client secret for Elements options
   useEffect(() => {
-    const getClientSecret = async () => {
+    const startSubscription = async () => {
       try {
         const response = await fetch('/api/subscription/create-payment-intent', {
           method: 'POST',
@@ -215,13 +190,18 @@ export default function PaymentForm(props: PaymentFormProps) {
         const data = await response.json()
         if (response.ok) {
           setClientSecret(data.clientSecret)
+          setSubscriptionId(data.subscriptionId)
         }
       } catch (error) {
-        console.error('Failed to create payment intent:', error)
+        console.error('Failed to start subscription:', error)
       }
     }
-
-    getClientSecret()
+    if (effectRan.current) {
+      return
+    }
+    console.log('Starting subscription...')
+    effectRan.current = true
+    startSubscription()
   }, [props.priceId])
 
   const options = {
@@ -234,7 +214,7 @@ export default function PaymentForm(props: PaymentFormProps) {
     },
   }
 
-  if (!clientSecret) {
+  if (!clientSecret || !subscriptionId) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cta-500"></div>
@@ -245,7 +225,7 @@ export default function PaymentForm(props: PaymentFormProps) {
 
   return (
     <Elements stripe={stripePromise} options={options}>
-      <CheckoutForm {...props} />
+      <CheckoutForm {...props} clientSecret={clientSecret} subscriptionId={subscriptionId} />
     </Elements>
   )
 }

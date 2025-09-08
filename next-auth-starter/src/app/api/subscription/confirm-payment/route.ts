@@ -14,17 +14,17 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { paymentIntentId } = body
+    const { subscriptionId } = body
 
-    if (!paymentIntentId) {
+    if (!subscriptionId) {
       return NextResponse.json(
-        { error: 'Payment Intent ID is required' },
+        { error: 'Subscription ID is required' },
         { status: 400 }
       )
     }
 
-    // Use SubscriptionService to handle payment confirmation and subscription creation
-    await SubscriptionService.confirmPaymentAndCreateSubscription(userId, paymentIntentId)
+    // Finalize subscription using subscription-first flow (no extra payments here)
+    await SubscriptionService.finalizeSubscriptionAfterPayment(userId, subscriptionId)
 
     return NextResponse.json({
       success: true,
@@ -34,8 +34,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Payment confirmation error:', error)
     
-    // Handle specific error types
-    const errorMessage = error instanceof Error ? error.message : 'Failed to confirm payment'
+    const errorMessage = error instanceof Error ? error.message : 'Failed to confirm subscription'
     
     return NextResponse.json(
       { error: errorMessage },

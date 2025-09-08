@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { auth, currentUser } from '@clerk/nextjs/server'
 import { stripe, SubscriptionService } from '@/lib/stripe'
 import { PrismaClient } from '@/generated/prisma'
 
@@ -48,37 +48,47 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get or create customer (use real email when available)
+    const clerkUser = await currentUser()
+    const email = clerkUser?.primaryEmailAddress?.emailAddress || ''
+
     const customerId = await SubscriptionService.createOrGetCustomer(
       userId, 
-      '', 
+      email, 
       user.name
     )
 
-    // Get price details from Stripe
-    const price = await stripe.prices.retrieve(priceId)
-    
-    // Create Payment Intent for subscription
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: price.unit_amount!,
-      currency: price.currency,
+    // Create subscription in incomplete state and return its invoice PaymentIntent client_secret
+    const subscription = await stripe.subscriptions.create({
       customer: customerId,
+      items: [{ price: priceId }],
+      payment_behavior: 'default_incomplete',
+      expand: ['latest_invoice.payment_intent'],
+      payment_settings: {
+        save_default_payment_method: 'on_subscription',
+      },
       metadata: {
         userId,
-        priceId,
         type: 'subscription',
-        ...metadata
+        ...metadata,
       },
-      automatic_payment_methods: {
-        enabled: true,
-      },
-      setup_future_usage: 'off_session', // For future payments if needed
     })
 
+    const latestInvoice: any = subscription.latest_invoice
+    const paymentIntent: any = latestInvoice?.payment_intent
+    const clientSecret = paymentIntent?.client_secret
+
+    if (!clientSecret) {
+      return NextResponse.json(
+        { error: 'Failed to initialize subscription payment' },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json({
-      clientSecret: paymentIntent.client_secret,
-      amount: price.unit_amount,
-      currency: price.currency,
-      customerId
+      clientSecret,
+      subscriptionId: subscription.id,
+      customerId,
     })
 
   } catch (error) {
