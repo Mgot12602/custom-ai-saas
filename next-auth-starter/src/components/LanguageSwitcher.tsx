@@ -50,7 +50,7 @@ export default function LanguageSwitcher({ pathName }: LanguageSwitcherProps) {
       <div>
         <button
           type="button"
-          className="inline-flex justify-center w-full rounded-md border border-secondary-300 dark:border-neutral-700 shadow-sm px-4 py-2 bg-white dark:bg-neutral-800 text-sm font-display font-medium text-secondary-700 dark:text-secondary-200 hover:bg-neutral-50 dark:hover:bg-neutral-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cta-500 transition-colors duration-200"
+          className="inline-flex justify-center w-full rounded-md border border-secondary-300 dark:border-neutral-700 shadow-sm px-4 py-2 bg-white dark:bg-neutral-800 text-sm font-display font-medium text-secondary-700 dark:text-secondary-200 hover:bg-neutral-50 dark:hover:bg-neutral-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3b82f6] transition-colors duration-200"
           id="language-menu"
           aria-expanded="true"
           aria-haspopup="true"

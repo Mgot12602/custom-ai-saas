@@ -16,7 +16,7 @@ export function DashboardClient({ userId, locale }: DashboardClientProps) {
     <div className="max-w-4xl mx-auto p-8">
       <h1 className="text-3xl font-bold mb-6">{t("title")}</h1>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+      <div className="bg-white dark:bg-neutral-800 rounded-lg shadow p-6 mb-6">
         <h2 className="text-xl font-semibold mb-4">
           {t("welcome")}
         </h2>
@@ -37,7 +37,7 @@ export function DashboardClient({ userId, locale }: DashboardClientProps) {
               {t("exploreClerk")}{" "}
               <a
                 href="https://clerk.com/docs"
-                className="text-cta-500 hover:text-cta-600 dark:text-cta-400 dark:hover:text-cta-300 hover:underline transition-colors duration-200"
+                className="text-[#3b82f6] hover:text-[#2563eb] dark:text-[#60a5fa] dark:hover:text-[#93c5fd] hover:underline transition-colors duration-200"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -52,7 +52,7 @@ export function DashboardClient({ userId, locale }: DashboardClientProps) {
             </li>
             <li>
               {t("addFeatures")}{" "}
-              <Link href={`/${locale}`} className="text-cta-500 hover:text-cta-600 dark:text-cta-400 dark:hover:text-cta-300 hover:underline transition-colors duration-200">
+              <Link href={`/${locale}`} className="text-[#3b82f6] hover:text-[#2563eb] dark:text-[#60a5fa] dark:hover:text-[#93c5fd] hover:underline transition-colors duration-200">
                 {t("backHome")}
               </Link>
             </li>

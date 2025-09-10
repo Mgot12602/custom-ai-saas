@@ -110,6 +110,7 @@ export function PricingPage() {
             <h1 className="text-4xl font-extrabold font-display text-primary-900 dark:text-primary-100 sm:text-5xl">
               Choose Your Plan
             </h1>
+          
             <p className="mt-4 text-xl text-secondary-600 dark:text-secondary-400 max-w-3xl mx-auto">
               Start free, upgrade when you need more. All plans include our core features 
               with generous usage limits and premium support.
@@ -120,7 +121,7 @@ export function PricingPage() {
           <div className="grid lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {plansLoading ? (
               <div className="col-span-3 text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-cta-500"></div>
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#3b82f6]"></div>
                 <p className="mt-4 text-secondary-600 dark:text-secondary-400">Loading pricing plans...</p>
               </div>
             ) : pricingPlans.length === 0 ? (
@@ -133,13 +134,14 @@ export function PricingPage() {
                 key={plan.name}
                 className={`relative bg-white dark:bg-neutral-800 rounded-2xl shadow-lg border ${
                   plan.name === 'Pro' 
-                    ? 'border-2 border-cta-500 scale-105' 
+                    ? 'border-2 border-[#3b82f6] scale-105' 
                     : 'border-neutral-200 dark:border-neutral-700'
                 }`}
+                
               >
                 {plan.name === 'Pro' && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-cta-500 text-white px-6 py-2 rounded-full text-sm font-semibold font-display">
+                    <span className="bg-[#3b82f6] text-white px-6 py-2 rounded-full text-sm font-semibold font-display">
                       Most Popular
                     </span>
                   </div>
@@ -199,7 +201,7 @@ export function PricingPage() {
                         <button
                           onClick={() => plan.stripePriceId && handleUpgrade(plan.stripePriceId, plan.name)}
                           disabled={loading === plan.name || !plan.stripePriceId || !user}
-                          className={`w-full py-3 px-6 rounded-lg font-medium font-body transition-all duration-200 cursor-pointer bg-cta-500 hover:bg-cta-600 focus:ring-2 focus:ring-cta-500 focus:ring-offset-2 text-white shadow-lg hover:shadow-xl ${loading === plan.name ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className={`w-full py-3 px-6 rounded-lg font-medium font-body transition-all duration-200 cursor-pointer bg-[#3b82f6] hover:bg-[#2563eb] focus:ring-2 focus:ring-[#3b82f6] focus:ring-offset-2 text-white shadow-lg hover:shadow-xl ${loading === plan.name ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                           {!user ? (
                             'Sign In to Upgrade'

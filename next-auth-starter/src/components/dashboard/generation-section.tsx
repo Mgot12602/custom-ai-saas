@@ -293,7 +293,7 @@ export function GenerationSection({ userId, showTestActions = true }: Generation
 
   const getPlanColor = (status: string) => {
     switch (status) {
-      case 'pro': return 'text-cta-600 bg-cta-50 dark:text-cta-400 dark:bg-cta-900'
+      case 'pro': return 'text-[#2563eb] bg-[#eff6ff] dark:text-[#60a5fa] dark:bg-[#1e3a8a]'
       case 'enterprise': return 'text-primary-600 bg-primary-50 dark:text-primary-400 dark:bg-primary-900'
       default: return 'text-secondary-600 bg-secondary-50 dark:text-secondary-400 dark:bg-secondary-900'
     }
@@ -416,7 +416,7 @@ export function GenerationSection({ userId, showTestActions = true }: Generation
             className={`px-6 py-3 rounded-md font-medium text-white shadow-sm transition-colors duration-200 focus:ring-2 focus:ring-offset-2 ${
               buttonDisabled
                 ? "bg-secondary-400 cursor-not-allowed"
-                : "bg-cta-500 hover:bg-cta-600 focus:ring-cta-500"
+                : "bg-[#3b82f6] hover:bg-[#2563eb] focus:ring-[#3b82f6]"
             }`}
           >
             {buttonDisabled ? "Running…" : "Start AI Generation"}
@@ -459,7 +459,7 @@ export function GenerationSection({ userId, showTestActions = true }: Generation
               {subscriptionInfo.subscription?.currentPeriodEnd && (
                 <div className="flex justify-between">
                   <span className="text-secondary-600 dark:text-secondary-400">
-                    {subscriptionInfo.subscription.status === 'canceled' ? 'Access Until:' : 'Renews On:'}
+                    {subscriptionInfo.subscription.status === 'cancelled' ? 'Access Until:' : 'Renews On:'}
                   </span>
                   <span className="font-medium text-primary-900 dark:text-primary-100">
                     {new Date(subscriptionInfo.subscription.currentPeriodEnd).toLocaleDateString()}
@@ -491,12 +491,12 @@ export function GenerationSection({ userId, showTestActions = true }: Generation
         
         {usageStatus && (
           <div className="bg-white dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700 p-4 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
+          {/*   <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium font-display text-primary-900 dark:text-primary-100">Usage Details</h3>
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getPlanColor(usageStatus.subscriptionStatus)}`}>
                 {usageStatus.subscriptionStatus} Plan
               </span>
-            </div>
+            </div> */}
 
             <div className="space-y-3">
               <div>
@@ -507,9 +507,7 @@ export function GenerationSection({ userId, showTestActions = true }: Generation
                   </span>
                 </div>
                 {/* Debug info - remove this once working */}
-                <div className="text-xs text-gray-500 mb-1">
-                  Debug: {usagePercentage.toFixed(1)}% | Color: {usagePercentage > 90 ? 'error' : usagePercentage > 70 ? 'warning' : 'success'}
-                </div>
+                
                 <div className="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2">
                   <div 
                     className="h-2 rounded-full transition-all duration-300"
@@ -517,10 +515,10 @@ export function GenerationSection({ userId, showTestActions = true }: Generation
                       width: `${Math.max(usagePercentage, 2)}%`,
                       minWidth: usagePercentage > 0 ? '8px' : '0px',
                       backgroundColor: usagePercentage > 90 
-                        ? 'var(--color-error-500)' 
+                        ? 'green' 
                         : usagePercentage > 70 
-                        ? 'var(--color-warning-500)' 
-                        : 'var(--color-success-500)'
+                        ? 'yellow' 
+                        : 'green'
                     }}
                     title={`Usage: ${usagePercentage.toFixed(1)}%`}
                   ></div>

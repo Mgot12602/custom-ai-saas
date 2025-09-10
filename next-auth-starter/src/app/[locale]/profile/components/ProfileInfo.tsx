@@ -86,36 +86,7 @@ export default function ProfileInfo() {
         )}
 
         <div className="bg-neutral-50 dark:bg-neutral-800 rounded-lg p-6 border border-neutral-200 dark:border-neutral-700">
-          {/* Profile Picture */}
-          <div className="flex items-center space-x-6 mb-6">
-            <div className="flex-shrink-0">
-              {user.imageUrl ? (
-                <Image
-                  src={user.imageUrl}
-                  alt="Profile"
-                  width={80}
-                  height={80}
-                  className="h-20 w-20 rounded-full object-cover"
-                />
-              ) : (
-                <div className="h-20 w-20 rounded-full bg-neutral-300 dark:bg-neutral-700 flex items-center justify-center">
-                  <span className="text-secondary-600 dark:text-secondary-300 text-2xl font-medium">
-                    {user.firstName?.charAt(0) || user.emailAddresses[0]?.emailAddress.charAt(0) || '?'}
-                  </span>
-                </div>
-              )}
-            </div>
-            <div>
-              <h4 className="text-sm font-medium font-display text-primary-900 dark:text-primary-100">Profile Picture</h4>
-              <p className="text-sm text-secondary-500 dark:text-secondary-400 mb-2">
-                Update your profile picture through your account provider
-              </p>
-              <button className="text-sm text-cta-600 hover:text-cta-500 dark:text-cta-400 dark:hover:text-cta-300">
-                Change picture
-              </button>
-            </div>
-          </div>
-
+  
           {/* Basic Information */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             {/* First Name */}
@@ -171,15 +142,6 @@ export default function ProfileInfo() {
               </div>
             </div>
 
-            {/* User ID (Read-only) */}
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-2">
-                User ID
-              </label>
-              <div className="px-3 py-2 bg-neutral-100 dark:bg-neutral-700 border border-neutral-300 dark:border-neutral-600 rounded-md text-primary-900 dark:text-primary-100 font-mono text-sm">
-                {user.id}
-              </div>
-            </div>
           </div>
 
           {/* Action Buttons */}

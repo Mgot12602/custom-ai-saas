@@ -27,7 +27,7 @@ export default function Navbar() {
             <div className="hidden md:ml-6 md:flex md:space-x-8">
               <Link
                 href="/"
-                className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-display font-medium text-cta-500 hover:text-cta-600 hover:border-cta-300 dark:text-cta-400 dark:hover:text-cta-300 dark:hover:border-cta-500 transition-colors duration-200"
+                className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-display font-medium text-[#3b82f6] hover:text-[#2563eb] hover:border-[#93c5fd] dark:text-[#60a5fa] dark:hover:text-[#93c5fd] dark:hover:border-[#3b82f6] transition-colors duration-200"
               >
                 {t("home")}
               </Link>
@@ -35,7 +35,7 @@ export default function Navbar() {
               {/* Pricing Navigation */}
               <Link
                 href="/pricing"
-                className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-display font-medium text-cta-500 hover:text-cta-600 hover:border-cta-300 dark:text-cta-400 dark:hover:text-cta-300 dark:hover:border-cta-500 transition-colors duration-200"
+                className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-display font-medium text-[#3b82f6] hover:text-[#2563eb] hover:border-[#93c5fd] dark:text-[#60a5fa] dark:hover:text-[#93c5fd] dark:hover:border-[#3b82f6] transition-colors duration-200"
               >
                 Pricing
               </Link>
@@ -44,7 +44,7 @@ export default function Navbar() {
               <SignedIn>
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-display font-medium text-cta-500 hover:text-cta-600 hover:border-cta-300 dark:text-cta-400 dark:hover:text-cta-300 dark:hover:border-cta-500 transition-colors duration-200"
+                  className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-display font-medium text-[#3b82f6] hover:text-[#2563eb] hover:border-[#93c5fd] dark:text-[#60a5fa] dark:hover:text-[#93c5fd] dark:hover:border-[#3b82f6] transition-colors duration-200"
                 >
                   {t("dashboard")}
                 </Link>
@@ -53,26 +53,26 @@ export default function Navbar() {
           </div>
           <div className="flex items-center space-x-4">
             {/* Theme Switcher */}
-            <ThemeSwitcher className="hidden md:block" />
+           {/*  <ThemeSwitcher className="hidden md:block" /> */}
             
             <div className="hidden md:flex md:items-center md:space-x-4">
               <SignedOut>
                 <SignInButton>
-                  <button className="inline-flex items-center px-4 py-2 border border-secondary-300 text-sm font-display font-medium rounded-md text-secondary-700 bg-secondary-100 hover:bg-secondary-200 dark:text-secondary-200 dark:bg-secondary-700 dark:hover:bg-secondary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cta-500 transition-colors duration-200">
+                  <button className="inline-flex items-center px-4 py-2 border border-secondary-300 text-sm font-display font-medium rounded-md text-secondary-700 bg-secondary-100 hover:bg-secondary-200 dark:text-secondary-200 dark:bg-secondary-700 dark:hover:bg-secondary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3b82f6] transition-colors duration-200">
                     {t("signIn")}
                   </button>
                 </SignInButton>
                 <SignUpButton>
-                  <button className="ml-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-display font-medium rounded-md text-white bg-cta-500 hover:bg-cta-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cta-500 transition-colors duration-200 shadow-sm">
+                  <button className="ml-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-display font-medium rounded-md text-white bg-[#3b82f6] hover:bg-[#2563eb] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3b82f6] transition-colors duration-200 shadow-sm">
                     {t("signUp")}
                   </button>
                 </SignUpButton>
               </SignedOut>
               <SignedIn>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-display font-medium text-secondary-500 dark:text-secondary-300">
+                  {/* <span className="text-sm font-display font-medium text-secondary-500 dark:text-secondary-300">
                     {t("profile")}
-                  </span>
+                  </span> */}
                   <CustomUserButton afterSignOutUrl="/" />
                 </div>
               </SignedIn>

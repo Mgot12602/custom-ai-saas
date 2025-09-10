@@ -107,7 +107,7 @@ function CheckoutForm({ priceId, planName, onSuccess, onError, onCancel, clientS
   if (!clientSecret || !subscriptionId) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cta-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3b82f6]"></div>
         <span className="ml-3">Preparing payment...</span>
       </div>
     )
@@ -217,7 +217,7 @@ export default function PaymentForm(props: PaymentFormProps) {
   if (!clientSecret || !subscriptionId) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cta-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3b82f6]"></div>
         <span className="ml-3">Initializing payment...</span>
       </div>
     )

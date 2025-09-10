@@ -28,7 +28,7 @@ export default async function Home({ params }: Props) {
           <SignedIn>
             <Link
               href="/dashboard"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-cta-500 hover:bg-cta-600 text-white font-display font-medium text-base transition-colors duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cta-500"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#3b82f6] hover:bg-[#2563eb] text-white font-display font-medium text-base transition-colors duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3b82f6]"
             >
               {t("goToDashboard")}
             </Link>
@@ -36,7 +36,7 @@ export default async function Home({ params }: Props) {
           <SignedOut>
             <div className="flex gap-4 items-center flex-col sm:flex-row">
               <SignUpButton>
-                <button className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-cta-500 text-white font-display font-medium text-base transition-all duration-200 hover:bg-cta-600 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cta-500 transform hover:scale-105">
+                <button className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#3b82f6] text-white font-display font-medium text-base transition-all duration-200 hover:bg-[#2563eb] shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3b82f6] transform hover:scale-105">
                   {t("getStarted")}
                 </button>
               </SignUpButton>
